@@ -1,0 +1,22 @@
+# Залежності
+node_modules/
+
+# Зібраний код
+dist/
+
+# Environment файли
+.env
+.env.local
+.env.*.local
+
+# Логи
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# ОС
+.DS_Store
+Thumbs.db
