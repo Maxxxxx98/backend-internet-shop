@@ -2,49 +2,66 @@ import 'reflect-metadata';
 import './container';
 import express, { Application, Request, Response, NextFunction } from 'express';
 import dotenv from 'dotenv';
+
 import logger from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { AppDataSource } from './config/data-source';
+
 import { AuthController } from './controllers/AuthController';
 import { authMiddleware } from './middleware/authMiddleware';
 import { ProductController } from './controllers/ProductController';
 import { CartController } from './controllers/CartController';
+
+/**
+ * Головний файл застосунку — точка входу серверної частини інтернет-магазину.
+ * 
+ * Виконує:
+ * - Завантаження змінних середовища
+ * - Налаштування Express-сервера
+ * - Підключення middleware
+ * - Реєстрацію всіх маршрутів
+ * - Ініціалізацію бази даних та запуск сервера
+ */
 
 dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// ====================== MIDDLEWARE ======================
+
+// Парсинг JSON та x-www-form-urlencoded
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Логування запитів
+// Логування всіх вхідних HTTP-запитів
 app.use((req: Request, res: Response, next: NextFunction) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
 
-// Роути
+// ====================== ROUTES ======================
+
+// Публічні маршрути
 app.get('/', (req: Request, res: Response) => {
   res.json({ message: 'Server is running' });
 });
 
-// Auth
+// Auth routes
 app.post('/auth/register', AuthController.register);
 app.post('/auth/login', AuthController.login);
 
-// Products
+// Product routes
 app.post('/products', ProductController.create);
 app.get('/products', ProductController.getAll);
 
-// Cart (захищені роути)
+// Protected cart routes (вимагають авторизацію)
 app.post('/cart', authMiddleware, CartController.addToCart);
 app.get('/cart', authMiddleware, CartController.getCart);
 app.delete('/cart', authMiddleware, CartController.removeFromCart);
 app.get('/cart/total', authMiddleware, CartController.getCartTotal);
 
-// Захищений роут
+// Приклад захищеного маршруту
 app.get('/profile', authMiddleware, (req: Request, res: Response) => {
   res.json({
     message: 'This is a protected route',
@@ -52,10 +69,16 @@ app.get('/profile', authMiddleware, (req: Request, res: Response) => {
   });
 });
 
-// Обробка помилок
+// ====================== ERROR HANDLING ======================
+
+// Глобальний обробник помилок (повинен бути останнім middleware)
 app.use(errorHandler);
 
-// Ініціалізація TypeORM
+// ====================== SERVER START ======================
+
+/**
+ * Ініціалізація бази даних та запуск сервера
+ */
 AppDataSource.initialize()
   .then(() => {
     logger.info('Database connected successfully');
