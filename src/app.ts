@@ -59,7 +59,6 @@ app.use(errorHandler);
 AppDataSource.initialize()
   .then(() => {
     logger.info('Database connected successfully');
-
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });
@@ -67,3 +66,5 @@ AppDataSource.initialize()
   .catch((error) => {
     logger.error('Error during Data Source initialization:', error);
   });
+
+export { app };
